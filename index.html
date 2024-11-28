@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GAミーティング会場の検索</title>
+  <!-- Bootstrap 5 CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
     body {
@@ -17,34 +19,29 @@
       text-align: center;
       margin-top: 20px;
       color: #333;
+      font-size: 1.5em;
     }
 
     #map {
       width: 100%;
-      height: 300px;
+      height: 400px;
     }
 
     .location-list {
       list-style-type: none;
       padding: 0;
-      margin: 20px 0;
+      margin: 0;
     }
 
     .location-list li {
-      padding: 10px;
-      margin-bottom: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
       background-color: #f8f9fa;
-      border-radius: 5px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
       display: flex;
       justify-content: space-between;
       align-items: center;
-    }
-
-    .location-list li a {
-      text-decoration: none;
-      color: #007bff;
-      font-weight: bold;
     }
 
     .location-list li .google-link {
@@ -52,56 +49,77 @@
       color: #28a745;
     }
 
+    .location-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .location-info span {
+      font-size: 0.9em;
+      color: #555;
+    }
+
     @media (max-width: 768px) {
-      h1 {
-        font-size: 1.5em;
-      }
-
       #map {
-        height: 400px;
-      }
-
-      .location-list li {
-        font-size: 0.9em;
+        height: 300px;
       }
     }
   </style>
 </head>
 <body>
 
-  <h1>最寄りのGAミーティング会場を探す</h1>
+  <div class="container my-4">
+    <h1>最寄りのGAミーティング会場を探す</h1>
 
-  <div id="map"></div>
+    <div class="row">
+      <div class="col-lg-8">
+        <div id="map"></div>
+      </div>
+      <div class="col-lg-4">
+        <ul class="location-list" id="location-list"></ul>
+      </div>
+    </div>
+  </div>
 
-  <ul class="location-list" id="location-list"></ul>
-
+  <!-- Bootstrap and Leaflet JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    // サンプルデータ（会場の位置と名前）
+    // 会場データ（会場名、住所、座標）
     var meetingLocations = [
-      { name: "東京駅", latitude: 35.681236, longitude: 139.767125 },
-      { name: "東京タワー", latitude: 35.658581, longitude: 139.745433 },
-      { name: "スカイツリー", latitude: 35.710063, longitude: 139.8107 },
-      { name: "新宿駅", latitude: 35.6895, longitude: 139.6917 },
-      { name: "渋谷駅", latitude: 35.658034, longitude: 139.701636 },
-      { name: "札幌駅", latitude: 43.0687, longitude: 141.3508 },
-      { name: "すすきの", latitude: 43.5891, longitude: 141.3707 },
-      { name: "青森駅", latitude: 40.8221, longitude: 140.7475 },
-      { name: "仙台駅", latitude: 38.2682, longitude: 140.8694 },
-      { name: "名古屋駅", latitude: 35.170915, longitude: 136.8812 },
-      { name: "大阪駅", latitude: 34.702485, longitude: 135.495951 },
-      { name: "京都駅", latitude: 35.0116, longitude: 135.7681 },
-      { name: "広島駅", latitude: 34.3963, longitude: 132.4594 },
-      { name: "福岡駅", latitude: 33.5902, longitude: 130.4017 },
-      { name: "那覇", latitude: 26.2124, longitude: 127.6809 },
-      { name: "沖縄市", latitude: 26.338, longitude: 127.803 },
-      { name: "釧路駅", latitude: 42.9764, longitude: 144.3793 },
-      { name: "鹿児島中央駅", latitude: 31.5895, longitude: 130.5576 },
-      { name: "長崎駅", latitude: 32.7503, longitude: 129.8777 },
-      { name: "高松駅", latitude: 34.3428, longitude: 134.0467 }
+      { 
+        name: "東京駅", 
+        address: "東京都千代田区丸の内1丁目", 
+        latitude: 35.681236, 
+        longitude: 139.767125 
+      },
+      { 
+        name: "東京タワー", 
+        address: "東京都港区芝公園4丁目2-8", 
+        latitude: 35.658581, 
+        longitude: 139.745433 
+      },
+      { 
+        name: "スカイツリー", 
+        address: "東京都墨田区押上1丁目1-2", 
+        latitude: 35.710063, 
+        longitude: 139.8107 
+      },
+      { 
+        name: "新宿駅", 
+        address: "東京都新宿区西新宿1丁目", 
+        latitude: 35.6895, 
+        longitude: 139.6917 
+      },
+      { 
+        name: "渋谷駅", 
+        address: "東京都渋谷区渋谷2丁目24-1", 
+        latitude: 35.658034, 
+        longitude: 139.701636 
+      }
     ];
 
-    // 地図の初期化
+    // 地図の初期化（日本全体を表示）
     var map = L.map('map').setView([35.681236, 139.767125], 5);  // 初期位置を東京駅周辺に設定
 
     // OpenStreetMapのタイルレイヤーを追加
@@ -110,7 +128,7 @@
     }).addTo(map);
 
     // 現在地表示の設定
-    map.locate({ setView: true, maxZoom: 16 });  // 現在地を自動で取得して表示
+    map.locate({ setView: true, maxZoom: 16 });
 
     // 現在地が取得できたときのイベント
     map.on('locationfound', function(e) {
@@ -132,34 +150,35 @@
       
       // リストの項目を作成
       var listItem = document.createElement('li');
-      var link = document.createElement('a');
-      link.href = '#';
-      link.textContent = location.name;
-      listItem.appendChild(link);
+      listItem.classList.add('d-flex', 'justify-content-between', 'align-items-center');
 
-      // Googleマップで開くリンクを作成
-      var googleLink = document.createElement('a');
-      googleLink.href = `https://www.google.com/maps?q=${location.latitude},${location.longitude}`;
-      googleLink.target = '_blank';
-      googleLink.classList.add('google-link');
-      googleLink.textContent = 'Googleマップで開く';
+      var locationInfo = document.createElement('div');
+      locationInfo.classList.add('location-info');
+      var name = document.createElement('strong');
+      name.textContent = location.name;
+      var address = document.createElement('span');
+      address.textContent = location.address;
+      locationInfo.appendChild(name);
+      locationInfo.appendChild(address);
 
       // Googleマップでルートを検索するリンクを作成
       var routeLink = document.createElement('a');
       routeLink.href = `https://www.google.com/maps/dir/?api=1&origin=${map.getCenter().lat},${map.getCenter().lng}&destination=${location.latitude},${location.longitude}`;
       routeLink.target = '_blank';
-      routeLink.classList.add('google-link');
-      routeLink.textContent = 'ルート検索';
+      routeLink.classList.add('google-link', 'ms-2');
+      routeLink.textContent = 'ルートを検索';
 
-      listItem.appendChild(googleLink);
+      listItem.appendChild(locationInfo);
       listItem.appendChild(routeLink);
+
       locationList.appendChild(listItem);
 
-      // リスト項目をクリックすると、該当するピンにズームイン
-      link.addEventListener('click', function() {
-        map.setView([location.latitude, location.longitude], 13);
-        marker.openPopup();
-      });
+      // マーカーにポップアップを追加
+      marker.bindPopup(`
+        <strong>${location.name}</strong><br>
+        ${location.address}<br>
+        <a href="https://www.google.com/maps/dir/?api=1&origin=${map.getCenter().lat},${map.getCenter().lng}&destination=${location.latitude},${location.longitude}" target="_blank">ルートを検索</a>
+      `);
     });
   </script>
 </body>
