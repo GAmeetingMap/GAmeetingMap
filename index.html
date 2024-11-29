@@ -9,15 +9,14 @@
   <style>
     #map {
       width: 100%;
-      height: 400px;
-      margin-bottom: 20px;
+      height: 600px;
       position: relative;
     }
     .btn-locate {
       position: absolute;
       bottom: 10px;
-      right: 10px;
-      z-index: 1000;
+      left: 50%;
+      transform: translateX(-50%);
       background-color: #007bff;
       color: white;
       border: none;
@@ -32,6 +31,7 @@
       cursor: pointer;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       transition: background-color 0.3s ease;
+      z-index: 1000;
     }
     .btn-locate:hover {
       background-color: #0056b3;
@@ -50,118 +50,146 @@
     .location-item:hover {
       background-color: #e9ecef;
     }
+    .spinner-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 9999;
+      display: none;
+    }
   </style>
 </head>
 <body>
 
 <div class="container">
   <h1 class="text-center my-4">GAミーティング会場検索</h1>
-  <div id="map">
-    <button class="btn-locate" id="reLocate">現在地を取得</button>
-  </div>
+  <div id="map"></div>
+  <button class="btn-locate" id="reLocate">現在地を取得</button>
   <div class="location-list">
     <h3>会場一覧</h3>
     <div id="location-list"></div>
   </div>
 </div>
 
+<!-- スピナー -->
+<div class="spinner-container" id="spinner">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</div>
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-  const meetingLocations = [
-    { name: "東京駅", latitude: 35.681236, longitude: 139.767125, dates: ["2024-12-01 日 18:00～19:00", "2024-12-08 日 18:00～19:00"] },
-    { name: "東京タワー", latitude: 35.658581, longitude: 139.745433, dates: ["2024-12-02 月 10:00～11:00", "2024-12-09 月 10:00～11:00"] },
-    { name: "スカイツリー", latitude: 35.710063, longitude: 139.8107, dates: ["2024-12-03 火 18:00～19:00", "2024-12-10 火 18:00～19:00"] },
-    { name: "渋谷駅", latitude: 35.658033, longitude: 139.701635, dates: ["2024-12-04 水 19:00～20:00", "2024-12-11 水 19:00～20:00"] },
-    { name: "新宿駅", latitude: 35.689606, longitude: 139.700571, dates: ["2024-12-05 木 18:30～19:30", "2024-12-12 木 18:30～19:30"] },
-    { name: "池袋駅", latitude: 35.728926, longitude: 139.711891, dates: ["2024-12-06 金 19:00～20:00", "2024-12-13 金 19:00～20:00"] },
-    { name: "品川駅", latitude: 35.628472, longitude: 139.73873, dates: ["2024-12-07 土 17:00～18:00", "2024-12-14 土 17:00～18:00"] },
-    { name: "上野駅", latitude: 35.713768, longitude: 139.777254, dates: ["2024-12-08 日 16:00～17:00", "2024-12-15 日 16:00～17:00"] },
-    { name: "秋葉原駅", latitude: 35.698353, longitude: 139.774103, dates: ["2024-12-09 月 18:30～19:30", "2024-12-16 月 18:30～19:30"] },
-    { name: "浅草駅", latitude: 35.711494, longitude: 139.79833, dates: ["2024-12-10 火 17:00～18:00", "2024-12-17 火 17:00～18:00"] }
-  ];
+// Google SheetsのAPIキーとシートIDを設定
+const sheetId = '2PACX-1vQnaQ0rIAiDK_0Oo06hw6k6ER2l3jQMoXU2rBu4es5SGckfbUcJps_nJUJiCBmpgcrlvtJneu6NY8HU';  // シートID
+const apiKey = 'AIzaSyDKWj17GH1HSQtOxE5e8iIg2JRnpbC393s';  // 取得したAPIキー
+const range = '会場情報';  // 使用するシートの範囲（必要に応じて変更）
 
-  const map = L.map('map').setView([35.681236, 139.767125], 5);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
+const map = L.map('map').setView([35.681236, 139.767125], 5); // 初期位置は東京
 
-  const locationListDiv = document.getElementById('location-list');
-  const locateButton = document.getElementById('reLocate');
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
 
-  let markers = [];
+const locationListDiv = document.getElementById('location-list');
+const locateButton = document.getElementById('reLocate');
+const spinner = document.getElementById('spinner'); // スピナー要素
 
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371;
-    const toRad = (x) => x * Math.PI / 180;
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-  };
+let markers = [];
+let userMarker = null;
 
-  const updateLocationList = (userLat, userLng) => {
-    const sortedLocations = meetingLocations
-      .map(location => ({
-        ...location,
-        distance: calculateDistance(userLat, userLng, location.latitude, location.longitude)
-      }))
-      .sort((a, b) => a.distance - b.distance);
+// Google Sheets APIからデータを取得する関数
+const fetchDataFromGoogleSheets = async () => {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${apiKey}`;
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    return data.values.slice(1); // 最初の行はヘッダーなので、それ以外を返す
+  } catch (error) {
+    console.error("データ取得エラー:", error);
+    return [];
+  }
+};
 
-    locationListDiv.innerHTML = '';
-    markers.forEach(marker => map.removeLayer(marker));
-    markers = [];
+// 地図上に会場のピンを差す関数
+const updateMapWithPins = (locations) => {
+  locations.forEach(([name, address, lat, lng]) => {
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lng);
 
-    sortedLocations.forEach(location => {
-      const marker = L.marker([location.latitude, location.longitude]).addTo(map);
-      marker.bindPopup(location.name);
+    if (!isNaN(latitude) && !isNaN(longitude)) {
+      const marker = L.marker([latitude, longitude]).addTo(map);
+      marker.bindPopup(`
+        <strong>${name}</strong><br>
+        ${address}
+      `);
       markers.push(marker);
-
-      const locationDiv = document.createElement('div');
-      locationDiv.className = 'location-item';
-      locationDiv.innerHTML = `
-        <strong>${location.name}</strong><br>
-        ${location.dates.join('<br>')}<br>
-        <a href="https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${location.latitude},${location.longitude}" target="_blank">Googleマップでルートを検索する</a>
-      `;
-
-      locationDiv.addEventListener('click', () => {
-        // クリックした会場へスクロール
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-
-        // スクロール後に地図を移動
-        setTimeout(() => {
-          map.setView([location.latitude, location.longitude], 15);
-          marker.openPopup();
-        }, 500); // 少し遅らせて地図を移動
-      });
-
-      locationListDiv.appendChild(locationDiv);
-    });
-  };
-
-  const getUserLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const userLat = position.coords.latitude;
-          const userLng = position.coords.longitude;
-          map.setView([userLat, userLng], 13);
-          updateLocationList(userLat, userLng);
-        },
-        () => {
-          alert("現在地の取得に失敗しました。");
-        }
-      );
-    } else {
-      alert("このブラウザでは位置情報を取得できません。");
     }
-  };
+  });
+};
 
-  // ページ読み込み時に自動的に現在地を取得する
-  window.onload = getUserLocation;
+// 会場情報のリストを更新する関数
+const updateLocationList = (locations) => {
+  locationListDiv.innerHTML = '';
+  locations.forEach(([name, address, lat, lng]) => {
+    const locationDiv = document.createElement('div');
+    locationDiv.className = 'location-item';
+    locationDiv.innerHTML = `
+      <strong>${name}</strong><br>
+      ${address}<br>
+      <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank">Googleマップでルートを検索する</a>
+    `;
+    locationDiv.addEventListener('click', () => {
+      map.setView([lat, lng], 15);
+      const marker = markers.find(marker => marker.getLatLng().lat === parseFloat(lat) && marker.getLatLng().lng === parseFloat(lng));
+      marker.openPopup();
+    });
+    locationListDiv.appendChild(locationDiv);
+  });
+};
 
-  locateButton.addEventListener('click', getUserLocation);
+// 現在地の取得
+const getUserLocation = () => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const userLat = position.coords.latitude;
+        const userLng = position.coords.longitude;
 
+        if (userMarker) map.removeLayer(userMarker);
+
+        userMarker = L.marker([userLat, userLng]).addTo(map);
+        userMarker.bindPopup(`現在地`).openPopup();
+
+        map.setView([userLat, userLng], 13);
+        showSpinner(); // スピナー表示
+        const locations = await fetchDataFromGoogleSheets();
+        hideSpinner(); // スピナー非表示
+        updateLocationList(locations);
+        updateMapWithPins(locations);
+      },
+      () => {
+        alert("現在地の取得に失敗しました。");
+      }
+    );
+  } else {
+    alert("このブラウザでは位置情報を取得できません。");
+  }
+};
+
+// スピナー表示関数
+const showSpinner = () => {
+  spinner.style.display = 'block';
+};
+
+// スピナー非表示関数
+const hideSpinner = () => {
+  spinner.style.display = 'none';
+};
+
+window.onload = getUserLocation;
+locateButton.addEventListener('click', getUserLocation);
 </script>
 
 </body>
