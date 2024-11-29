@@ -61,6 +61,13 @@
       z-index: 9999;
       display: none;
     }
+
+    /* スマートフォン用の地図の高さ調整 */
+    @media (max-width: 767px) {
+      #map {
+        height: 400px; /* スマホでは地図の高さを縮める */
+      }
+    }
   </style>
 </head>
 <body>
