@@ -3,194 +3,66 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GAミーティング会場検索</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
-  <style>
-    #map {
-      width: 100%;
-      height: 600px;
-      position: relative;
-    }
-    .btn-locate {
-      position: absolute;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      padding: 10px;
-      width: 150px;
-      height: 40px;
-      text-align: center;
-      line-height: 20px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      transition: background-color 0.3s ease;
-      z-index: 1000;
-    }
-    .btn-locate:hover {
-      background-color: #0056b3;
-    }
-    .location-list {
-      margin-top: 20px;
-    }
-    .location-item {
-      padding: 10px;
-      margin-bottom: 10px;
-      background-color: #f8f9fa;
-      border-radius: 5px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      cursor: pointer;
-    }
-    .location-item:hover {
-      background-color: #e9ecef;
-    }
-    .spinner-container {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 9999;
-      display: none;
-    }
-  </style>
+  <title>Google Sheets API Fetch Example</title>
 </head>
 <body>
 
-<div class="container">
-  <h1 class="text-center my-4">GAミーティング会場検索</h1>
-  <div id="map"></div>
-  <button class="btn-locate" id="reLocate">現在地を取得</button>
-  <div class="location-list">
-    <h3>会場一覧</h3>
-    <div id="location-list"></div>
-  </div>
-</div>
+  <h1>Google Sheets Data</h1>
+  <div id="data"></div>
 
-<!-- スピナー -->
-<div class="spinner-container" id="spinner">
-  <div class="spinner-border text-primary" role="status">
-    <span class="visually-hidden">Loading...</span>
-  </div>
-</div>
+  <script>
+    // Google Sheets APIのシートIDとAPIキー
+    const sheetId = '2PACX-1vQnaQ0rIAiDK_0Oo06hw6k6ER2l3jQMoXU2rBu4es5SGckfbUcJps_nJUJiCBmpgcrlvtJneu6NY8HU';
+    const apiKey = 'AIzaSyDKWj17GH1HSQtOxE5e8iIg2JRnpbC393s';
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script>
-// Google SheetsのAPIキーとシートIDを設定
-const sheetId = '2PACX-1vQnaQ0rIAiDK_0Oo06hw6k6ER2l3jQMoXU2rBu4es5SGckfbUcJps_nJUJiCBmpgcrlvtJneu6NY8HU';  // シートID
-const apiKey = 'AIzaSyCBod8JP46gDz_cVOU91xQneUj0ao9OPy4';  // 取得したAPIキー
-const range = '会場情報';  // 使用するシートの範囲（必要に応じて変更）
+    // 取得する範囲の指定（シート名は「会場情報」）
+    const range = '会場情報!A1:D10';  // 必要に応じて範囲を変更
 
-const map = L.map('map').setView([35.681236, 139.767125], 5); // 初期位置は東京
+    // URLエンコードして範囲を適切にエンコード
+    const encodedRange = encodeURIComponent(range);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
+    // APIリクエストのURL
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodedRange}?key=${apiKey}`;
 
-const locationListDiv = document.getElementById('location-list');
-const locateButton = document.getElementById('reLocate');
-const spinner = document.getElementById('spinner'); // スピナー要素
-
-let markers = [];
-let userMarker = null;
-
-// Google Sheets APIからデータを取得する関数
-const fetchDataFromGoogleSheets = async () => {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${apiKey}`;
-  try {
-    const response = await fetch(url);
-    const data = await response.json();
-    return data.values.slice(1); // 最初の行はヘッダーなので、それ以外を返す
-  } catch (error) {
-    console.error("データ取得エラー:", error);
-    return [];
-  }
-};
-
-// 地図上に会場のピンを差す関数
-const updateMapWithPins = (locations) => {
-  locations.forEach(([name, address, lat, lng]) => {
-    const latitude = parseFloat(lat);
-    const longitude = parseFloat(lng);
-
-    if (!isNaN(latitude) && !isNaN(longitude)) {
-      const marker = L.marker([latitude, longitude]).addTo(map);
-      marker.bindPopup(`
-        <strong>${name}</strong><br>
-        ${address}
-      `);
-      markers.push(marker);
+    // データをGoogle Sheetsから取得する関数
+    function fetchDataFromGoogleSheets() {
+      fetch(url)
+        .then(response => {
+          // レスポンスがOKかどうかを確認
+          if (!response.ok) {
+            throw new Error('データ取得に失敗しました: ' + response.statusText);
+          }
+          return response.json();
+        })
+        .then(data => {
+          // データ取得成功時に表示
+          if (data && data.values) {
+            const rows = data.values;
+            const table = document.createElement('table');
+            rows.forEach(row => {
+              const tr = document.createElement('tr');
+              row.forEach(cell => {
+                const td = document.createElement('td');
+                td.textContent = cell;
+                tr.appendChild(td);
+              });
+              table.appendChild(tr);
+            });
+            document.getElementById('data').appendChild(table);
+          } else {
+            throw new Error('データが取得できませんでした');
+          }
+        })
+        .catch(error => {
+          // エラーハンドリング
+          console.error('データ取得エラー:', error);
+          document.getElementById('data').textContent = 'データの取得に失敗しました。';
+        });
     }
-  });
-};
 
-// 会場情報のリストを更新する関数
-const updateLocationList = (locations) => {
-  locationListDiv.innerHTML = '';
-  locations.forEach(([name, address, lat, lng]) => {
-    const locationDiv = document.createElement('div');
-    locationDiv.className = 'location-item';
-    locationDiv.innerHTML = `
-      <strong>${name}</strong><br>
-      ${address}<br>
-      <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank">Googleマップでルートを検索する</a>
-    `;
-    locationDiv.addEventListener('click', () => {
-      map.setView([lat, lng], 15);
-      const marker = markers.find(marker => marker.getLatLng().lat === parseFloat(lat) && marker.getLatLng().lng === parseFloat(lng));
-      marker.openPopup();
-    });
-    locationListDiv.appendChild(locationDiv);
-  });
-};
-
-// 現在地の取得
-const getUserLocation = () => {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const userLat = position.coords.latitude;
-        const userLng = position.coords.longitude;
-
-        if (userMarker) map.removeLayer(userMarker);
-
-        userMarker = L.marker([userLat, userLng]).addTo(map);
-        userMarker.bindPopup(`現在地`).openPopup();
-
-        map.setView([userLat, userLng], 13);
-        showSpinner(); // スピナー表示
-        const locations = await fetchDataFromGoogleSheets();
-        hideSpinner(); // スピナー非表示
-        updateLocationList(locations);
-        updateMapWithPins(locations);
-      },
-      () => {
-        alert("現在地の取得に失敗しました。");
-      }
-    );
-  } else {
-    alert("このブラウザでは位置情報を取得できません。");
-  }
-};
-
-// スピナー表示関数
-const showSpinner = () => {
-  spinner.style.display = 'block';
-};
-
-// スピナー非表示関数
-const hideSpinner = () => {
-  spinner.style.display = 'none';
-};
-
-window.onload = getUserLocation;
-locateButton.addEventListener('click', getUserLocation);
-</script>
+    // ページロード時にデータ取得を開始
+    window.onload = fetchDataFromGoogleSheets;
+  </script>
 
 </body>
 </html>
