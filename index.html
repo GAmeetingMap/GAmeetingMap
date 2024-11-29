@@ -9,24 +9,29 @@
   <style>
     #map {
       width: 100%;
-      height: 60vh;
-      position: relative;
+      height: 400px;
       margin-bottom: 20px;
+      position: relative;
     }
     .btn-locate {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
       z-index: 1000;
       background-color: #007bff;
       color: white;
       border: none;
-      border-radius: 30px;
-      padding: 10px 20px;
+      border-radius: 5px;
+      padding: 10px;
+      width: 150px;
+      height: 40px;
+      text-align: center;
+      line-height: 20px;
       font-size: 16px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      font-weight: bold;
       cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.3s ease;
     }
     .btn-locate:hover {
       background-color: #0056b3;
@@ -35,29 +40,15 @@
       margin-top: 20px;
     }
     .location-item {
-      padding: 15px;
+      padding: 10px;
       margin-bottom: 10px;
       background-color: #f8f9fa;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       cursor: pointer;
-      transition: transform 0.2s, background-color 0.2s;
     }
     .location-item:hover {
       background-color: #e9ecef;
-      transform: scale(1.02);
-    }
-    @media (max-width: 576px) {
-      #map {
-        height: 50vh;
-      }
-      .location-item {
-        font-size: 14px;
-      }
-      .btn-locate {
-        padding: 8px 16px;
-        font-size: 14px;
-      }
     }
   </style>
 </head>
@@ -65,55 +56,38 @@
 
 <div class="container">
   <h1 class="text-center my-4">GAミーティング会場検索</h1>
-  <div id="map"></div>
-  <button class="btn-locate" id="reLocate">現在地を取得</button>
+  <div id="map">
+    <button class="btn-locate" id="reLocate">現在地を取得</button>
+  </div>
   <div class="location-list">
     <h3>会場一覧</h3>
-    <div id="location-list" class="d-flex flex-column gap-3"></div>
+    <div id="location-list"></div>
   </div>
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
   const meetingLocations = [
-    { 
-      name: "東京駅", 
-      coordinates: [
-        { date: "2024-12-01", time: "18:00～19:00", dayOfWeek: "日" },
-        { date: "2024-12-08", time: "18:00～19:00", dayOfWeek: "日" },
-        { date: "2024-12-15", time: "18:00～19:00", dayOfWeek: "日" },
-        { date: "2024-12-22", time: "18:00～19:00", dayOfWeek: "日" }
-      ],
-      latitude: 35.681236, 
-      longitude: 139.767125
-    },
-    { 
-      name: "東京タワー", 
-      coordinates: [
-        { date: "2024-12-02", time: "10:00～11:00", dayOfWeek: "月" },
-        { date: "2024-12-09", time: "10:00～11:00", dayOfWeek: "月" }
-      ],
-      latitude: 35.658581, 
-      longitude: 139.745433
-    },
-    { 
-      name: "スカイツリー", 
-      coordinates: [
-        { date: "2024-12-03", time: "18:00～19:00", dayOfWeek: "火" },
-        { date: "2024-12-10", time: "18:00～19:00", dayOfWeek: "火" }
-      ],
-      latitude: 35.710063, 
-      longitude: 139.8107
-    }
+    { name: "東京駅", latitude: 35.681236, longitude: 139.767125, dates: ["2024-12-01 日 18:00～19:00", "2024-12-08 日 18:00～19:00"] },
+    { name: "東京タワー", latitude: 35.658581, longitude: 139.745433, dates: ["2024-12-02 月 10:00～11:00", "2024-12-09 月 10:00～11:00"] },
+    { name: "スカイツリー", latitude: 35.710063, longitude: 139.8107, dates: ["2024-12-03 火 18:00～19:00", "2024-12-10 火 18:00～19:00"] },
+    { name: "渋谷駅", latitude: 35.658033, longitude: 139.701635, dates: ["2024-12-04 水 19:00～20:00", "2024-12-11 水 19:00～20:00"] },
+    { name: "新宿駅", latitude: 35.689606, longitude: 139.700571, dates: ["2024-12-05 木 18:30～19:30", "2024-12-12 木 18:30～19:30"] },
+    { name: "池袋駅", latitude: 35.728926, longitude: 139.711891, dates: ["2024-12-06 金 19:00～20:00", "2024-12-13 金 19:00～20:00"] },
+    { name: "品川駅", latitude: 35.628472, longitude: 139.73873, dates: ["2024-12-07 土 17:00～18:00", "2024-12-14 土 17:00～18:00"] },
+    { name: "上野駅", latitude: 35.713768, longitude: 139.777254, dates: ["2024-12-08 日 16:00～17:00", "2024-12-15 日 16:00～17:00"] },
+    { name: "秋葉原駅", latitude: 35.698353, longitude: 139.774103, dates: ["2024-12-09 月 18:30～19:30", "2024-12-16 月 18:30～19:30"] },
+    { name: "浅草駅", latitude: 35.711494, longitude: 139.79833, dates: ["2024-12-10 火 17:00～18:00", "2024-12-17 火 17:00～18:00"] }
   ];
 
-  const map = L.map('map').setView([35.681236, 139.767125], 12);
+  const map = L.map('map').setView([35.681236, 139.767125], 5);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
   const locationListDiv = document.getElementById('location-list');
   const locateButton = document.getElementById('reLocate');
+
   let markers = [];
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -121,9 +95,7 @@
     const toRad = (x) => x * Math.PI / 180;
     const dLat = toRad(lat2 - lat1);
     const dLon = toRad(lon2 - lon1);
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
     return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
   };
 
@@ -148,38 +120,48 @@
       locationDiv.className = 'location-item';
       locationDiv.innerHTML = `
         <strong>${location.name}</strong><br>
-        ${location.coordinates.map(coord => `${coord.date} (${coord.dayOfWeek}) ${coord.time}`).join('<br>')}<br>
+        ${location.dates.join('<br>')}<br>
         <a href="https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${location.latitude},${location.longitude}" target="_blank">Googleマップでルートを検索する</a>
       `;
 
       locationDiv.addEventListener('click', () => {
-        map.setView([location.latitude, location.longitude], 15);
-        marker.openPopup();
+        // クリックした会場へスクロール
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // スクロール後に地図を移動
+        setTimeout(() => {
+          map.setView([location.latitude, location.longitude], 15);
+          marker.openPopup();
+        }, 500); // 少し遅らせて地図を移動
       });
 
       locationListDiv.appendChild(locationDiv);
     });
   };
 
-  const locateUser = () => {
-    map.locate({ setView: true, maxZoom: 16 });
+  const getUserLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const userLat = position.coords.latitude;
+          const userLng = position.coords.longitude;
+          map.setView([userLat, userLng], 13);
+          updateLocationList(userLat, userLng);
+        },
+        () => {
+          alert("現在地の取得に失敗しました。");
+        }
+      );
+    } else {
+      alert("このブラウザでは位置情報を取得できません。");
+    }
   };
 
-  map.on('locationfound', e => {
-    const userLat = e.latlng.lat;
-    const userLng = e.latlng.lng;
+  // ページ読み込み時に自動的に現在地を取得する
+  window.onload = getUserLocation;
 
-    L.marker(e.latlng).addTo(map).bindPopup('現在地').openPopup();
-    updateLocationList(userLat, userLng);
-  });
+  locateButton.addEventListener('click', getUserLocation);
 
-  map.on('locationerror', () => {
-    alert('現在地の取得に失敗しました。');
-  });
-
-  locateButton.addEventListener('click', locateUser);
-
-  locateUser();
 </script>
 
 </body>
