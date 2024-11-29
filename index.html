@@ -9,36 +9,55 @@
   <style>
     #map {
       width: 100%;
-      height: 400px;
-      margin-bottom: 20px;
+      height: 60vh;
       position: relative;
+      margin-bottom: 20px;
     }
     .btn-locate {
-      position: absolute;
-      bottom: 10px;
+      position: fixed;
+      bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 1000;
-      background-color: white;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      padding: 5px 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 30px;
+      padding: 10px 20px;
+      font-size: 16px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
       cursor: pointer;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .btn-locate:hover {
+      background-color: #0056b3;
     }
     .location-list {
       margin-top: 20px;
     }
     .location-item {
-      padding: 10px;
+      padding: 15px;
       margin-bottom: 10px;
       background-color: #f8f9fa;
-      border-radius: 5px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
       cursor: pointer;
+      transition: transform 0.2s, background-color 0.2s;
     }
     .location-item:hover {
       background-color: #e9ecef;
+      transform: scale(1.02);
+    }
+    @media (max-width: 576px) {
+      #map {
+        height: 50vh;
+      }
+      .location-item {
+        font-size: 14px;
+      }
+      .btn-locate {
+        padding: 8px 16px;
+        font-size: 14px;
+      }
     }
   </style>
 </head>
@@ -46,12 +65,11 @@
 
 <div class="container">
   <h1 class="text-center my-4">GAミーティング会場検索</h1>
-  <div id="map">
-    <div class="btn-locate" id="reLocate">現在地を取得</div>
-  </div>
+  <div id="map"></div>
+  <button class="btn-locate" id="reLocate">現在地を取得</button>
   <div class="location-list">
     <h3>会場一覧</h3>
-    <div id="location-list"></div>
+    <div id="location-list" class="d-flex flex-column gap-3"></div>
   </div>
 </div>
 
@@ -89,18 +107,17 @@
     }
   ];
 
-  const map = L.map('map').setView([35.681236, 139.767125], 5);
+  const map = L.map('map').setView([35.681236, 139.767125], 12);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
   const locationListDiv = document.getElementById('location-list');
   const locateButton = document.getElementById('reLocate');
-
   let markers = [];
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; // 地球の半径 (km)
+    const R = 6371;
     const toRad = (x) => x * Math.PI / 180;
     const dLat = toRad(lat2 - lat1);
     const dLon = toRad(lon2 - lon1);
@@ -122,7 +139,7 @@
     markers.forEach(marker => map.removeLayer(marker));
     markers = [];
 
-    sortedLocations.forEach((location, index) => {
+    sortedLocations.forEach(location => {
       const marker = L.marker([location.latitude, location.longitude]).addTo(map);
       marker.bindPopup(location.name);
       markers.push(marker);
