@@ -50,25 +50,43 @@
     <div class="btn-locate" id="reLocate">現在地を取得</div>
   </div>
   <div class="location-list">
-    <h3>最寄りの会場</h3>
-    <div id="nearest-location" class="location-item"></div>
-    <h3>その他の会場</h3>
-    <div id="other-locations"></div>
+    <h3>会場一覧</h3>
+    <div id="location-list"></div>
   </div>
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
   const meetingLocations = [
-    { name: "東京駅", latitude: 35.681236, longitude: 139.767125 },
-    { name: "東京タワー", latitude: 35.658581, longitude: 139.745433 },
-    { name: "スカイツリー", latitude: 35.710063, longitude: 139.8107 },
-    { name: "渋谷駅", latitude: 35.658034, longitude: 139.701636 },
-    { name: "新宿駅", latitude: 35.690921, longitude: 139.700258 },
-    { name: "札幌駅", latitude: 43.0687, longitude: 141.3508 },
-    { name: "名古屋駅", latitude: 35.170915, longitude: 136.8812 },
-    { name: "大阪駅", latitude: 34.702485, longitude: 135.495951 },
-    { name: "福岡駅", latitude: 33.5902, longitude: 130.4017 }
+    { 
+      name: "東京駅", 
+      coordinates: [
+        { date: "2024-12-01", time: "18:00～19:00", dayOfWeek: "日" },
+        { date: "2024-12-08", time: "18:00～19:00", dayOfWeek: "日" },
+        { date: "2024-12-15", time: "18:00～19:00", dayOfWeek: "日" },
+        { date: "2024-12-22", time: "18:00～19:00", dayOfWeek: "日" }
+      ],
+      latitude: 35.681236, 
+      longitude: 139.767125
+    },
+    { 
+      name: "東京タワー", 
+      coordinates: [
+        { date: "2024-12-02", time: "10:00～11:00", dayOfWeek: "月" },
+        { date: "2024-12-09", time: "10:00～11:00", dayOfWeek: "月" }
+      ],
+      latitude: 35.658581, 
+      longitude: 139.745433
+    },
+    { 
+      name: "スカイツリー", 
+      coordinates: [
+        { date: "2024-12-03", time: "18:00～19:00", dayOfWeek: "火" },
+        { date: "2024-12-10", time: "18:00～19:00", dayOfWeek: "火" }
+      ],
+      latitude: 35.710063, 
+      longitude: 139.8107
+    }
   ];
 
   const map = L.map('map').setView([35.681236, 139.767125], 5);
@@ -76,8 +94,7 @@
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  const nearestLocationDiv = document.getElementById('nearest-location');
-  const otherLocationsDiv = document.getElementById('other-locations');
+  const locationListDiv = document.getElementById('location-list');
   const locateButton = document.getElementById('reLocate');
 
   let markers = [];
@@ -101,13 +118,7 @@
       }))
       .sort((a, b) => a.distance - b.distance);
 
-    const nearest = sortedLocations[0];
-    nearestLocationDiv.innerHTML = `
-      <strong>${nearest.name}</strong> - 距離: ${nearest.distance.toFixed(2)} km<br>
-      <a href="https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${nearest.latitude},${nearest.longitude}" target="_blank">Googleマップでルートを検索する</a>
-    `;
-
-    otherLocationsDiv.innerHTML = '';
+    locationListDiv.innerHTML = '';
     markers.forEach(marker => map.removeLayer(marker));
     markers = [];
 
@@ -116,21 +127,20 @@
       marker.bindPopup(location.name);
       markers.push(marker);
 
-      if (index > 0) {
-        const locationDiv = document.createElement('div');
-        locationDiv.className = 'location-item';
-        locationDiv.innerHTML = `
-          <strong>${location.name}</strong> - 距離: ${location.distance.toFixed(2)} km<br>
-          <a href="https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${location.latitude},${location.longitude}" target="_blank">Googleマップでルートを検索する</a>
-        `;
+      const locationDiv = document.createElement('div');
+      locationDiv.className = 'location-item';
+      locationDiv.innerHTML = `
+        <strong>${location.name}</strong><br>
+        ${location.coordinates.map(coord => `${coord.date} (${coord.dayOfWeek}) ${coord.time}`).join('<br>')}<br>
+        <a href="https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${location.latitude},${location.longitude}" target="_blank">Googleマップでルートを検索する</a>
+      `;
 
-        locationDiv.addEventListener('click', () => {
-          map.setView([location.latitude, location.longitude], 15);
-          marker.openPopup();
-        });
+      locationDiv.addEventListener('click', () => {
+        map.setView([location.latitude, location.longitude], 15);
+        marker.openPopup();
+      });
 
-        otherLocationsDiv.appendChild(locationDiv);
-      }
+      locationListDiv.appendChild(locationDiv);
     });
   };
 
