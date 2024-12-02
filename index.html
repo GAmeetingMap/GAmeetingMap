@@ -87,28 +87,15 @@
 <body>
 
 <!-- ナビゲーションバー -->
-<nav class="navbar navbar-expand-lg navbar-light bg-primary">
-  <div class="container">
-    <a class="navbar-brand text-white" href="#">GAミーティング会場マップ（非公式）</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="ナビゲーションの切替">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+<div class="container mt-1">
+  <!-- 見出しに変更したナビゲーション部分 -->
+  <h1 class="text-center">GAミーティング会場マップ（非公式）</h1>
 
-    <div class="collapse navbar-collapse" id="navbar">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-        <a class="nav-link text-white" aria-current="page" href="#">使い方</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link text-white" href="#">リンク</a>
-      </li>
-      </ul>
-      <form class="d-flex" role="search">
-        <input type="search" class="form-control" placeholder="検索..." aria-label="検索...">
-      </form>
-    </div>
-  </div>
-</nav>
+  <!-- ナビゲーションの下にリンクや検索フォームを配置 -->
+<div class="d-flex justify-content-center mt-1">
+  <a class="btn btn-link text-decoration-underline ms-3" href="notes.html">使い方と注意事項</a>
+  <a class="btn btn-link text-decoration-underline ms-3" href="http://www.gajapan.jp/">GA日本インフォメーションセンター</a>
+</div>
 
 <div class="container mt-4">
   <div id="map"></div>
