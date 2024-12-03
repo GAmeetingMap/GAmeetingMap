@@ -1,65 +1,47 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>使い方と注意事項 - GAミーティング会場マップ（非公式）</title>
+    <title>使い方と注意事項 - GAミーティング会場マップ</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .highlight {
-            color: red;
-            font-weight: bold;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css"> <!-- 外部CSSファイルへのリンク -->
 </head>
-<body>
+
+<body class="bg-light"> <!-- 背景色を直接指定する代わりに、classを利用 -->
     <div class="container mt-3">
         <h1 class="text-center">使い方と注意事項</h1>
 
-        <div class="mt-4">
-            <p><span class="highlight">注意:</span> このサイトでは<a href="http://www.gajapan.jp/" target="_blank">GAインフォメーションセンター</a>のスケジュールページから自動でデータを取得していますが、取得に失敗する場合があり、情報が正確でないことがあります。正確な情報は公式サイトのスケジュールページでご確認ください。</p>
+        <section class="mt-4">
+            <p><span class="highlight">注意:</span> このサイトは非公式です。最新情報は<a href="http://www.gajapan.jp/" target="_blank"
+                    rel="noopener noreferrer">GA日本インフォメーションセンター</a>でご確認ください。</p>
+        </section>
 
-            <h3>主な機能</h3>
+        <section>
+            <h2>主な機能</h2>
             <ul>
                 <li><strong>現在地の取得</strong> - 「現在地を取得」ボタンで位置情報を表示</li>
-                <li><strong>会場の表示</strong> - 地図上のピンをクリックして詳細情報</li>
-                <li><strong>会場リスト</strong> - 近くの会場がリストに表示され、クリックでズームイン</li>
+                <li><strong>会場の表示</strong> - 地図上のピンをクリックして詳細を確認</li>
+                <li><strong>会場リスト</strong> - 近隣会場をリストで表示</li>
             </ul>
+        </section>
 
-            <h3>使い方の手順</h3>
-            <ol>
-                <li>トップページで地図が表示されます。</li>
-                <li>「現在地を取得」ボタンをクリック。</li>
-                <li>現在地が表示され、会場リストが更新されます。</li>
-                <li>リストや地図のピンをクリックして詳細を確認。</li>
-            </ol>
-
-            <h3>注意事項</h3>
-            <p>GAミーティング会場マップをご利用いただくにあたっての重要な情報です。</p>
-
-            <h4>1. ミーティング情報の取得</h4>
-            <p>データはGA日本インフォメーションセンターのスケジュールページから自動で取得し、毎日午前0時10分に更新されます。</p>
-
-            <h4>2. 使用上の注意</h4>
+        <section>
+            <h2>注意事項</h2>
             <ul>
-                <li>このサイトは非公式です。最新情報は公式サイトでご確認ください。</li>
-                <li>情報は変更される場合があるので、常に最新の情報をご確認ください。</li>
+                <li>情報はGA日本インフォメーションセンターから自動取得していますが、正確性を保証しません。</li>
+                <li>データは毎日午前0時10分頃に更新されます。</li>
+                <li>情報利用に際しては自己責任でお願いいたします。</li>
             </ul>
+        </section>
 
-            <h4>3. 免責事項</h4>
-            <p>提供される情報に関して一切の保証はなく、利用者の責任でご使用ください。</p>
-
-            <h4>4. その他</h4>
-            <p>会場やミーティングの詳細については、<a href="http://www.gajapan.jp/" target="_blank">GAインフォメーションセンター</a>をご確認ください。</p>
-
-            <p>ご利用いただきありがとうございます。</p>
-        </div>
-
-        <div class="text-center mt-4">
-            <p>© 2024 GAミーティング会場マップ（非公式）</p>
-        </div>
+        <footer class="text-center mt-4">
+            <p>© 2024 GAミーティング会場マップ</p>
+        </footer>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
