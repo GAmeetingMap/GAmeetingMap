@@ -76,6 +76,7 @@ const updateMapWithPins = (locations) => {
             const popupContent = `
                 <strong>${venue}</strong><br>
                 ${data.address}<br>
+                <a href="https://www.google.com/maps/search/?q=${encodeURIComponent(venue)}+${encodeURIComponent(data.address)}" target="_blank">Googleマップで開く</a><br>
                 <ul>
                     ${data.events.map(event =>
                         `<li>${event.date} ${event.time} <a href="${event.url}" target="_blank">詳細</a></li>`
@@ -131,6 +132,7 @@ const updateLocationList = (locations, userLat, userLng) => {
         listItem.innerHTML = `
             <strong>${venue}</strong>（${distance.toFixed(1)} km）<br>
             ${address}<br>
+            <a href="https://www.google.com/maps?q=${encodeURIComponent(venue)} ${encodeURIComponent(address)}" target="_blank">Googleマップで開く</a>
         `;
         
         // 作成したリストアイテムを親要素に追加
@@ -171,6 +173,7 @@ listItem.addEventListener('click', async () => {
     marker.bindPopup(`
         <strong>${venue}</strong><br>
         ${address}<br>
+        <a href="https://www.google.com/maps/search/?q=${encodeURIComponent(venue)}+${encodeURIComponent(address)}" target="_blank">グーグルマップで開く</a>
         <ul>
             ${events.map(event =>
                 `<li>${event.date} ${event.time} <a href="${event.url}" target="_blank">詳細</a></li>`
